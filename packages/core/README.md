@@ -555,20 +555,24 @@ console.log(mermaid);
 
 | SQL Element | Shape | Example |
 |-------------|-------|---------|
-| Table/CTE/Subquery | Cylinder | `table_users[(users)]`, `cte_stats[(CTE:user_stats)]` |
-| SELECT/WHERE/GROUP BY | Hexagon | `{{SELECT}}`, `{{WHERE}}` |
-| JOIN/UNION | Diamond | `{LEFT JOIN}`, `{UNION ALL}` |
+| Table/CTE | Cylinder | `table_users[(users)]`, `cte_stats[(CTE:user_stats)]` |
+| Subquery | Hexagon | `subquery_alias{{SubQuery:alias}}` |
+| JOIN/Set Operations | Rectangle | `join_1[LEFT JOIN]`, `union_all_main[UNION ALL]` |
+| Output | Stadium | `main_output([Final Result])` |
 
 Example output for CTE query:
 ```mermaid
 flowchart TD
-    table_posts[(posts)] --> cte_user_stats_group_by{{GROUP BY}}
-    cte_user_stats_group_by --> cte_user_stats_select{{SELECT}}
-    cte_user_stats_select --> cte_user_stats[(CTE:user_stats)]
-    table_users[(users)] -->|NOT NULL| join_1{LEFT JOIN}
+    table_posts[(posts)]
+    table_users[(users)]
+    cte_user_stats[(CTE:user_stats)]
+    join_1[LEFT JOIN]
+    main_output([Final Result])
+
+    table_posts --> cte_user_stats
+    table_users -->|NOT NULL| join_1
     cte_user_stats -->|NULLABLE| join_1
-    join_1 --> main_select{{SELECT}}
-    main_select --> main_output(Final Result)
+    join_1 --> main_output
 ```
 
 ---
