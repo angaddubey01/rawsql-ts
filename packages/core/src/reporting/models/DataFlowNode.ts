@@ -11,7 +11,7 @@ export interface DataFlowNode {
 
 export type NodeType = 'table' | 'cte' | 'subquery' | 'process' | 'operation' | 'output';
 
-export type NodeShape = 'cylinder' | 'hexagon' | 'diamond' | 'rounded' | 'rectangle' | 'circle';
+export type NodeShape = 'cylinder' | 'hexagon' | 'diamond' | 'rounded' | 'rectangle' | 'circle' | 'stadium';
 
 /**
  * Base class for all data flow nodes
@@ -35,7 +35,8 @@ export class DataSourceNode extends BaseDataFlowNode {
     private annotations: Set<string> = new Set();
     
     constructor(id: string, label: string, type: 'table' | 'cte' | 'subquery') {
-        super(id, label, type, 'cylinder');
+        const shape: NodeShape = type === 'subquery' ? 'hexagon' : 'cylinder';
+        super(id, label, type, shape);
     }
 
     addAnnotation(annotation: string): void {
@@ -47,6 +48,9 @@ export class DataSourceNode extends BaseDataFlowNode {
     }
 
     getMermaidRepresentation(): string {
+        if (this.shape === 'hexagon') {
+            return `${this.id}{{${this.label}}}`;
+        }
         return `${this.id}[(${this.label})]`;
     }
 
@@ -59,7 +63,7 @@ export class DataSourceNode extends BaseDataFlowNode {
     }
 
     static createSubquery(alias: string): DataSourceNode {
-        return new DataSourceNode(`subquery_${alias}`, `SUB:${alias}`, 'subquery');
+        return new DataSourceNode(`subquery_${alias}`, `SubQuery:${alias}`, 'subquery');
     }
 }
 
@@ -142,8 +146,7 @@ export class OperationNode extends BaseDataFlowNode {
             label = normalizedType.toUpperCase() + ' JOIN';
         }
         
-        // Use hexagon shape for JOIN operations (same as old SELECT)
-        return new OperationNode(`join_${joinId}`, label, 'hexagon');
+        return new OperationNode(`join_${joinId}`, label, 'rectangle');
     }
 
     static createUnion(unionId: string, unionType: string = 'UNION ALL'): OperationNode {
@@ -164,10 +167,10 @@ export class OperationNode extends BaseDataFlowNode {
 export class OutputNode extends BaseDataFlowNode {
     constructor(context: string = 'main') {
         const label = context === 'main' ? 'Final Result' : `${context} Result`;
-        super(`${context}_output`, label, 'output', 'rounded');
+        super(`${context}_output`, label, 'output', 'stadium');
     }
 
     getMermaidRepresentation(): string {
-        return `${this.id}(${this.label})`;
+        return `${this.id}([${this.label}])`;
     }
 }
