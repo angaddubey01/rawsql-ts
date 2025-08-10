@@ -11,7 +11,7 @@ export interface DataFlowNode {
 
 export type NodeType = 'table' | 'cte' | 'subquery' | 'process' | 'operation' | 'output';
 
-export type NodeShape = 'cylinder' | 'hexagon' | 'diamond' | 'rounded' | 'rectangle' | 'circle';
+export type NodeShape = 'cylinder' | 'hexagon' | 'diamond' | 'rounded' | 'rectangle' | 'circle' | 'stadium';
 
 /**
  * Base class for all data flow nodes
@@ -34,8 +34,8 @@ export abstract class BaseDataFlowNode implements DataFlowNode {
 export class DataSourceNode extends BaseDataFlowNode {
     private annotations: Set<string> = new Set();
     
-    constructor(id: string, label: string, type: 'table' | 'cte' | 'subquery') {
-        super(id, label, type, 'cylinder');
+    constructor(id: string, label: string, type: 'table' | 'cte' | 'subquery', shape: NodeShape = 'cylinder') {
+        super(id, label, type, shape);
     }
 
     addAnnotation(annotation: string): void {
@@ -47,19 +47,35 @@ export class DataSourceNode extends BaseDataFlowNode {
     }
 
     getMermaidRepresentation(): string {
-        return `${this.id}[(${this.label})]`;
+        switch (this.shape) {
+            case 'hexagon':
+                return `${this.id}{{${this.label}}}`;
+            case 'rectangle':
+                return `${this.id}[${this.label}]`;
+            case 'rounded':
+                return `${this.id}(${this.label})`;
+            case 'circle':
+                return `${this.id}((${this.label}))`;
+            case 'stadium':
+                return `${this.id}([${this.label}])`;
+            case 'diamond':
+                return `${this.id}{${this.label}}`;
+            case 'cylinder':
+            default:
+                return `${this.id}[(${this.label})]`;
+        }
     }
 
     static createTable(tableName: string): DataSourceNode {
-        return new DataSourceNode(`table_${tableName}`, tableName, 'table');
+        return new DataSourceNode(`table_${tableName}`, tableName, 'table', 'cylinder');
     }
 
     static createCTE(cteName: string): DataSourceNode {
-        return new DataSourceNode(`cte_${cteName}`, `CTE:${cteName}`, 'cte');
+        return new DataSourceNode(`cte_${cteName}`, `CTE:${cteName}`, 'cte', 'cylinder');
     }
 
     static createSubquery(alias: string): DataSourceNode {
-        return new DataSourceNode(`subquery_${alias}`, `SUB:${alias}`, 'subquery');
+        return new DataSourceNode(`subquery_${alias}`, `SubQuery:${alias}`, 'subquery', 'hexagon');
     }
 }
 
@@ -122,6 +138,8 @@ export class OperationNode extends BaseDataFlowNode {
                 return `${this.id}(${this.label})`;
             case 'rectangle':
                 return `${this.id}[${this.label}]`;
+            case 'stadium':
+                return `${this.id}([${this.label}])`;
             case 'hexagon':
                 return `${this.id}{{${this.label}}}`;
             case 'diamond':
@@ -142,8 +160,8 @@ export class OperationNode extends BaseDataFlowNode {
             label = normalizedType.toUpperCase() + ' JOIN';
         }
         
-        // Use hexagon shape for JOIN operations (same as old SELECT)
-        return new OperationNode(`join_${joinId}`, label, 'hexagon');
+        // Use rectangle shape for JOIN operations
+        return new OperationNode(`join_${joinId}`, label, 'rectangle');
     }
 
     static createUnion(unionId: string, unionType: string = 'UNION ALL'): OperationNode {
@@ -164,10 +182,10 @@ export class OperationNode extends BaseDataFlowNode {
 export class OutputNode extends BaseDataFlowNode {
     constructor(context: string = 'main') {
         const label = context === 'main' ? 'Final Result' : `${context} Result`;
-        super(`${context}_output`, label, 'output', 'rounded');
+        super(`${context}_output`, label, 'output', 'stadium');
     }
 
     getMermaidRepresentation(): string {
-        return `${this.id}(${this.label})`;
+        return `${this.id}([${this.label}])`;
     }
 }
